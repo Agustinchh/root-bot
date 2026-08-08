@@ -24,7 +24,7 @@ Léela antes de empezar a programar.
 2. Desarrollá tu módulo dentro de `modules/tu-modulo/`.
 3. Abrí un Pull Request explicando qué hace tu módulo y por qué.
 4. Un moderador lo prueba localmente antes de aceptar.
-5. Si se aprueba, se integra manualmente al bot en producción.
+5. Si se aprueba, se integra manualmente al bot oficial.
 
 ## 🙋 ¿Dudas?
 
