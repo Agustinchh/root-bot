@@ -2,7 +2,7 @@
 
 Repositorio comunitario de módulos para **ROOT**, el bot oficial de Mundo Hacker.
 
-Acá cualquiera puede desarrollar un módulo nuevo que le gustaría ver en el bot. Todo lo que se aporte pasa por revisión antes de integrarse al bot en producción — nada se activa automáticamente.
+Acá cualquiera puede desarrollar un módulo nuevo que le gustaría ver en el bot. Todo lo que se aporte pasa por revisión antes de integrarse al bot oficial
 
 ## 🚨 Antes de empezar
 
