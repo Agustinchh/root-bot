@@ -6,7 +6,7 @@ Acá cualquiera puede desarrollar un módulo nuevo que le gustaría ver en el bo
 
 ## 🚨 Antes de empezar
 
-**No estás construyendo el bot.** ROOT ya existe y tiene su propio núcleo (loaders, configuración, conexión a Discord) que vive en un repositorio privado que no vas a ver ni tocar.
+**No estás construyendo el bot.** ROOT ya existe y tiene su propio núcleo (loaders, configuración, conexión a Discord) que vive en un repositorio privado.
 
 Lo que vas a construir es **una pieza que el bot carga sola** — un módulo independiente, dentro de su propia carpeta, que no toca nada fuera de sí mismo.
 
@@ -18,16 +18,6 @@ Toda la explicación detallada — estructura de un módulo, cómo armar el mani
 
 Léela antes de empezar a programar.
 
-## 📁 Lo esencial, resumido
-
-root-modules/
-└── modules/
-    ├── _template/          ← copiá esta carpeta para empezar
-    ├── tu-modulo-1/
-    └── tu-modulo-2/
-
-Cada módulo va en su propia carpeta dentro de `modules/`, con nombre corto en minúsculas y guiones (ej: `meme-diario`).
-
 ## ✅ Cómo se revisa y acepta un módulo
 
 1. Hacé fork de este repositorio.
@@ -38,4 +28,4 @@ Cada módulo va en su propia carpeta dentro de `modules/`, con nombre corto en m
 
 ## 🙋 ¿Dudas?
 
-Preguntá en el servidor de Mundo Hacker antes de ponerte a programar — capaz ya existe algo similar, o hay una forma más simple de lograr lo que buscás.
+Preguntá en el **[servidor de discord Mundo Hacker](https://mundohacker.top/discord)** antes de ponerte a programar — capaz ya existe algo similar, o hay una forma más simple de lograr lo que buscás.
