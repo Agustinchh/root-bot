@@ -23,7 +23,7 @@ Léela antes de empezar a programar.
 1. Hacé fork de este repositorio.
 2. Desarrollá tu módulo dentro de `modules/tu-modulo/`.
 3. Abrí un Pull Request explicando qué hace tu módulo y por qué.
-4. Un mantenedor lo prueba localmente antes de aceptar nada.
+4. Un moderador lo prueba localmente antes de aceptar.
 5. Si se aprueba, se integra manualmente al bot en producción.
 
 ## 🙋 ¿Dudas?
