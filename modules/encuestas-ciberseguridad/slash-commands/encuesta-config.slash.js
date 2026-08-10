@@ -4,7 +4,10 @@ import {
   SlashCommandBuilder
 } from 'discord.js';
 
-import { loadRuntimeConfig, saveRuntimeConfig } from '../services/config.service.js';
+import {
+  loadRuntimeConfig,
+  saveRuntimeConfig
+} from '../services/config.service.js';
 import { reiniciarProgramacion } from '../services/scheduler.service.js';
 
 export default {
@@ -70,7 +73,9 @@ export default {
       reiniciarProgramacion();
     }
 
-    const canalTexto = config.channelId ? `<#${config.channelId}>` : 'No configurado';
+    const canalTexto = config.channelId
+      ? `<#${config.channelId}>`
+      : 'No configurado';
 
     await interaction.reply({
       content:

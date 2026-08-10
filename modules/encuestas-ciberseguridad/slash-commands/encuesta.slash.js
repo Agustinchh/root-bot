@@ -3,9 +3,14 @@ import {
   SlashCommandBuilder
 } from 'discord.js';
 
-import { obtenerCategorias, obtenerDificultades, obtenerPreguntaAleatoria, obtenerResultados } from '../services/encuesta.service.js';
+import {
+  obtenerCategorias,
+  obtenerDificultades,
+  obtenerPreguntaAleatoria,
+  obtenerResultados
+} from '../services/encuesta.service.js';
 import { createEncuestaView } from '../views/encuesta.view.js';
-import { registerPoll, closePoll } from '../services/poll.service.js';
+import { registerPoll } from '../services/poll.service.js';
 
 const categorias = obtenerCategorias();
 const dificultades = obtenerDificultades();
@@ -56,7 +61,7 @@ export default {
     const dificultad = interaction.options.getString('dificultad') ?? 'todas';
     const duracion = interaction.options.getInteger('duracion') ?? 60;
 
-    const pregunta = obtenerPreguntaAleatoria({ categoria, dificultad });
+    const pregunta = await obtenerPreguntaAleatoria({ categoria, dificultad });
 
     if (!pregunta) {
       await interaction.reply({
@@ -66,7 +71,7 @@ export default {
       return;
     }
 
-    const pollId = registerPoll({
+    const pollId = await registerPoll({
       pregunta,
       durationMinutes: duracion,
       channelId: interaction.channelId
@@ -75,7 +80,7 @@ export default {
     const container = createEncuestaView({
       pollId,
       pregunta,
-      resultados: obtenerResultados(pollId, pregunta.opciones.length)
+      resultados: await obtenerResultados(pollId, pregunta.opciones.length)
     });
 
     await interaction.reply({
@@ -84,6 +89,9 @@ export default {
     });
 
     const message = await interaction.fetchReply();
-    registerPoll({ pollId, message });
+    await registerPoll({
+      pollId,
+      messageId: message.id
+    });
   }
 };

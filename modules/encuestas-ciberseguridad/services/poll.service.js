@@ -2,63 +2,112 @@ import crypto from 'node:crypto';
 
 import {
   obtenerResultados,
-  registrarVoto,
   obtenerTotalVotos,
   limpiarEncuesta
 } from './encuesta.service.js';
+import { loadState, updateState } from '../repositories/state.repository.js';
 
-const polls = new Map();
+export async function registerPoll({
+  pregunta = null,
+  durationMinutes = null,
+  channelId = null,
+  pollId = null,
+  messageId = null
+}) {
+  const id = pollId ?? crypto.randomUUID();
+  const existing = await getPoll(id);
 
-export function registerPoll({ pregunta, durationMinutes, channelId, pollId = null, message = null }) {
-  if (pollId && polls.has(pollId)) {
-    const poll = polls.get(pollId);
-    if (message) poll.message = message;
-    return pollId;
+  if (existing) {
+    if (!messageId && !channelId && !pregunta && !durationMinutes) {
+      return id;
+    }
+
+    await updateState((state) => ({
+      ...state,
+      polls: {
+        ...state.polls,
+        [id]: {
+          ...existing,
+          ...(messageId ? { messageId } : {}),
+          ...(channelId ? { channelId } : {}),
+          ...(pregunta ? { pregunta } : {}),
+          ...(durationMinutes ? { durationMinutes } : {})
+        }
+      }
+    }));
+
+    return id;
   }
 
-  const id = pollId ?? crypto.randomUUID();
-  const expiresAt = Date.now() + (durationMinutes * 60 * 1000);
-
-  polls.set(id, {
+  const poll = {
     id,
     pregunta,
     durationMinutes,
     channelId,
-    message,
-    expiresAt,
+    messageId,
+    expiresAt: Date.now() + (durationMinutes * 60 * 1000),
     closed: false
-  });
+  };
+
+  await updateState((state) => ({
+    ...state,
+    polls: {
+      ...state.polls,
+      [id]: poll
+    }
+  }));
 
   return id;
 }
 
-export function getPoll(pollId) {
-  return polls.get(pollId) ?? null;
+export async function getPoll(pollId) {
+  const state = await loadState();
+  return state.polls[pollId] ?? null;
 }
 
-export function getActivePolls() {
-  return [...polls.values()].filter((poll) => !poll.closed);
+export async function getActivePolls() {
+  const state = await loadState();
+  return Object.values(state.polls).filter((poll) => !poll.closed);
 }
 
-export function closePoll(pollId) {
-  const poll = polls.get(pollId);
+export async function closePoll(pollId) {
+  const poll = await getPoll(pollId);
   if (!poll || poll.closed) return null;
 
-  poll.closed = true;
+  await updateState((state) => ({
+    ...state,
+    polls: {
+      ...state.polls,
+      [pollId]: {
+        ...poll,
+        closed: true
+      }
+    }
+  }));
 
-  const resultados = obtenerResultados(
+  const resultados = await obtenerResultados(
     pollId,
     poll.pregunta.opciones.length
   );
 
   return {
     ...poll,
+    closed: true,
     resultados,
-    totalVotos: obtenerTotalVotos(pollId)
+    totalVotos: await obtenerTotalVotos(pollId)
   };
 }
 
-export function removePoll(pollId) {
-  polls.delete(pollId);
-  limpiarEncuesta(pollId);
+export async function removePoll(pollId) {
+  await updateState((state) => {
+    const polls = { ...state.polls };
+    delete polls[pollId];
+
+    return {
+      ...state,
+      polls
+    };
+  });
+
+  await limpiarEncuesta(pollId);
 }

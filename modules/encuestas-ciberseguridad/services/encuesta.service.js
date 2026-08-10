@@ -1,25 +1,46 @@
-import preguntas from '../data/preguntas.js';
+import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const usadas = new Set();
-const votos = new Map();
+import { updateState } from '../repositories/state.repository.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const preguntasPath = path.join(__dirname, '..', 'data', 'preguntas.json');
+
+async function cargarPreguntas() {
+  const raw = await fs.readFile(preguntasPath, 'utf8');
+  return JSON.parse(raw);
+}
+
+function cargarPreguntasSync() {
+  return JSON.parse(fsSync.readFileSync(preguntasPath, 'utf8'));
+}
 
 function normalizarFiltro(valor) {
   return typeof valor === 'string' ? valor.trim().toLowerCase() : 'todas';
 }
 
 export function obtenerCategorias() {
+  const preguntas = cargarPreguntasSync();
   return [...new Set(preguntas.map((pregunta) => pregunta.categoria))].sort();
 }
 
 export function obtenerDificultades() {
+  const preguntas = cargarPreguntasSync();
   return [...new Set(preguntas.map((pregunta) => pregunta.dificultad))].sort();
 }
 
-export function obtenerPreguntaAleatoria({ categoria = 'todas', dificultad = 'todas' } = {}) {
+export async function obtenerPreguntaAleatoria({
+  categoria = 'todas',
+  dificultad = 'todas'
+} = {}) {
+  const preguntas = await cargarPreguntas();
+
   const categoriaFiltro = normalizarFiltro(categoria);
   const dificultadFiltro = normalizarFiltro(dificultad);
 
-  let disponibles = preguntas.filter((pregunta) => {
+  const disponibles = preguntas.filter((pregunta) => {
     const coincideCategoria =
       categoriaFiltro === 'todas' || pregunta.categoria === categoriaFiltro;
 
@@ -29,42 +50,53 @@ export function obtenerPreguntaAleatoria({ categoria = 'todas', dificultad = 'to
     return coincideCategoria && coincideDificultad;
   });
 
-  if (disponibles.length === 0) {
-    return null;
-  }
+  if (disponibles.length === 0) return null;
 
-  const noUsadas = disponibles.filter((pregunta) => !usadas.has(pregunta.id));
+  let seleccionada = null;
 
-  if (noUsadas.length === 0) {
-    disponibles.forEach((pregunta) => usadas.delete(pregunta.id));
-    disponibles = [...disponibles];
-  } else {
-    disponibles = noUsadas;
-  }
+  await updateState((state) => {
+    const noUsadas = disponibles.filter(
+      (pregunta) => !state.usedQuestionIds.includes(pregunta.id)
+    );
 
-  const pregunta = disponibles[Math.floor(Math.random() * disponibles.length)];
-  usadas.add(pregunta.id);
+    const pool = noUsadas.length > 0 ? noUsadas : disponibles;
+    seleccionada = pool[Math.floor(Math.random() * pool.length)];
 
-  return pregunta;
+    return {
+      ...state,
+      usedQuestionIds:
+        noUsadas.length > 0
+          ? [...new Set([...state.usedQuestionIds, seleccionada.id])]
+          : [seleccionada.id]
+    };
+  });
+
+  return seleccionada;
 }
 
-export function registrarVoto(pollId, userId, opcion) {
-  if (!votos.has(pollId)) {
-    votos.set(pollId, new Map());
-  }
-
-  votos.get(pollId).set(userId, opcion);
+export async function registrarVoto(pollId, userId, opcion) {
+  await updateState((state) => ({
+    ...state,
+    votes: {
+      ...state.votes,
+      [pollId]: {
+        ...(state.votes[pollId] ?? {}),
+        [userId]: opcion
+      }
+    }
+  }));
 }
 
-export function obtenerVotos(pollId) {
-  return votos.get(pollId) ?? new Map();
+export async function obtenerVotos(pollId) {
+  const state = await loadState();
+  return state.votes[pollId] ?? {};
 }
 
-export function obtenerResultados(pollId, cantidadOpciones) {
-  const registros = obtenerVotos(pollId);
+export async function obtenerResultados(pollId, cantidadOpciones) {
+  const votos = await obtenerVotos(pollId);
   const resultados = Array.from({ length: cantidadOpciones }, () => 0);
 
-  for (const opcion of registros.values()) {
+  for (const opcion of Object.values(votos)) {
     if (Number.isInteger(opcion) && opcion >= 0 && opcion < cantidadOpciones) {
       resultados[opcion] += 1;
     }
@@ -73,10 +105,19 @@ export function obtenerResultados(pollId, cantidadOpciones) {
   return resultados;
 }
 
-export function obtenerTotalVotos(pollId) {
-  return obtenerVotos(pollId).size;
+export async function obtenerTotalVotos(pollId) {
+  const votos = await obtenerVotos(pollId);
+  return Object.keys(votos).length;
 }
 
-export function limpiarEncuesta(pollId) {
-  votos.delete(pollId);
+export async function limpiarEncuesta(pollId) {
+  await updateState((state) => {
+    const votes = { ...state.votes };
+    delete votes[pollId];
+
+    return {
+      ...state,
+      votes
+    };
+  });
 }

@@ -16,14 +16,17 @@ export default {
     if (!interaction.isButton()) return;
 
     const partes = interaction.customId.split(':');
-
-    if (partes.length !== 4 || partes[0] !== 'ciberencuesta' || partes[1] !== 'v1') {
+    if (
+      partes.length !== 4 ||
+      partes[0] !== 'ciberencuesta' ||
+      partes[1] !== 'v1'
+    ) {
       return;
     }
 
     const [, , pollId, opcionTexto] = partes;
     const opcion = Number(opcionTexto);
-    const poll = getPoll(pollId);
+    const poll = await getPoll(pollId);
 
     if (!poll) {
       await interaction.reply({
@@ -34,10 +37,10 @@ export default {
     }
 
     if (poll.closed || Date.now() >= poll.expiresAt) {
-      const resultado = closePoll(pollId);
+      const resultado = await closePoll(pollId);
 
-      if (poll.message && resultado) {
-        await poll.message.edit({
+      if (resultado) {
+        await interaction.message.edit({
           components: [
             createEncuestaView({
               pollId,
@@ -46,7 +49,7 @@ export default {
               cerrada: true
             })
           ]
-        });
+        }).catch(() => null);
       }
 
       await interaction.reply({
@@ -56,31 +59,33 @@ export default {
       return;
     }
 
-    if (!Number.isInteger(opcion) || opcion < 0 || opcion >= poll.pregunta.opciones.length) {
+    if (
+      !Number.isInteger(opcion) ||
+      opcion < 0 ||
+      opcion >= poll.pregunta.opciones.length
+    ) {
       return;
     }
 
-    registrarVoto(pollId, interaction.user.id, opcion);
+    await registrarVoto(pollId, interaction.user.id, opcion);
 
-    const resultados = obtenerResultados(
+    const resultados = await obtenerResultados(
       pollId,
       poll.pregunta.opciones.length
     );
 
-    if (poll.message) {
-      await poll.message.edit({
-        components: [
-          createEncuestaView({
-            pollId,
-            pregunta: poll.pregunta,
-            resultados
-          })
-        ]
-      });
-    }
+    await interaction.message.edit({
+      components: [
+        createEncuestaView({
+          pollId,
+          pregunta: poll.pregunta,
+          resultados
+        })
+      ]
+    }).catch(() => null);
 
-    const votosUsuario = obtenerVotos(pollId);
-    const opcionElegida = votosUsuario.get(interaction.user.id);
+    const votosUsuario = await obtenerVotos(pollId);
+    const opcionElegida = votosUsuario[interaction.user.id];
 
     await interaction.reply({
       content: `🗳️ Voto registrado: **${String.fromCharCode(65 + opcionElegida)}**. Podés cambiarlo mientras la encuesta siga abierta.`,

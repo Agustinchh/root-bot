@@ -6,7 +6,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const configPath = path.join(__dirname, '..', 'data', 'config.json');
 
 const defaults = {
-  enabled: true,
   channelId: null,
   automatic: false,
   intervalMinutes: 1440,

@@ -1,5 +1,4 @@
 {
-  "enabled": true,
   "channelId": null,
   "automatic": false,
   "intervalMinutes": 1440,

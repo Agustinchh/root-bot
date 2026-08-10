@@ -3,7 +3,6 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ContainerBuilder,
-  MessageFlags,
   SeparatorBuilder,
   SeparatorSpacingSize,
   TextDisplayBuilder
@@ -18,7 +17,12 @@ function porcentaje(valor, total) {
   return Math.round((valor / total) * 100);
 }
 
-export function createEncuestaView({ pollId, pregunta, resultados = [], cerrada = false }) {
+export function createEncuestaView({
+  pollId,
+  pregunta,
+  resultados = [],
+  cerrada = false
+}) {
   const total = resultados.reduce((sum, value) => sum + value, 0);
 
   const container = new ContainerBuilder()
@@ -79,5 +83,3 @@ export function createEncuestaView({ pollId, pregunta, resultados = [], cerrada 
 
   return container;
 }
-
-export { MessageFlags };
